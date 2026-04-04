@@ -1,0 +1,36 @@
+services:
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main-slim
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - OLLAMA_BASE_URL=http://127.0.0.1:11434
+    volumes:
+      - open-webui:/app/backend/data
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    ports:
+      - "9099:9099"
+    volumes:
+      - pipelines:/app/pipelines
+    restart: unless-stopped
+    environment:
+      - PIPELINES_API_KEY=0p3n-w3bu!
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    network_mode: host
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+    depends_on:
+      - openwebui
+
+  middleware:
+    build: ./middleware
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  open-webui:
+  pipelines:
